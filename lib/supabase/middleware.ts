@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[v0] Missing Supabase environment variables")
+    console.warn("[v0] Supabase environment variables not available in middleware context")
     return NextResponse.next()
   }
 
@@ -34,13 +34,7 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-      !user &&
-      !request.nextUrl.pathname.startsWith("/auth") &&
-      !request.nextUrl.pathname.startsWith("/api") &&
-      request.nextUrl.pathname !== "/" &&
-      request.nextUrl.pathname !== "/favicon.ico"
-    ) {
+    if (!user && request.nextUrl.pathname !== "/" && !request.nextUrl.pathname.startsWith("/auth")) {
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
       return NextResponse.redirect(url)
