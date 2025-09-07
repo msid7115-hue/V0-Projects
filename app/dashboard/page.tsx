@@ -13,9 +13,9 @@ import { KanbanBoard } from "@/components/kanban-board"
 import { CalendarView } from "@/components/calendar-view"
 import { ListView } from "@/components/list-view"
 import { ActivityFeed } from "@/components/activity-feed"
-import { useTasks } from "@/hooks/use-tasks"
+import { useSupabaseTasks } from "@/hooks/use-supabase-tasks"
 import { useAnalytics } from "@/hooks/use-analytics"
-import { useRealtime } from "@/contexts/realtime-context"
+import { useSupabaseAuth } from "@/contexts/supabase-auth-context"
 import {
   Plus,
   Search,
@@ -25,37 +25,42 @@ import {
   Kanban,
   Calendar,
   Activity,
-  Wifi,
-  WifiOff,
   Sparkles,
   Zap,
+  AlertCircle,
 } from "lucide-react"
 import type { Task } from "@/lib/types"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function DashboardPage() {
-  const { tasks, isLoading, createTask, updateTask, deleteTask, updateTaskStatus } = useTasks()
+  const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus } = useSupabaseTasks()
   const analytics = useAnalytics()
-  const { isConnected } = useRealtime()
+  const { user } = useSupabaseAuth()
 
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredTasks = tasks.filter(
-    (task) =>
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const filteredTasks =
+    tasks?.filter(
+      (task) =>
+        task?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task?.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    ) || []
 
   const handleCreateTask = async (taskData: Omit<Task, "id" | "createdAt" | "updatedAt" | "comments">) => {
-    await createTask(taskData)
-    setIsTaskFormOpen(false)
+    const result = await createTask(taskData)
+    if (result) {
+      setIsTaskFormOpen(false)
+    }
   }
 
   const handleUpdateTask = async (taskData: Omit<Task, "id" | "createdAt" | "updatedAt" | "comments">) => {
     if (editingTask) {
-      await updateTask(editingTask.id, taskData)
-      setEditingTask(undefined)
+      const result = await updateTask(editingTask.id, taskData)
+      if (result) {
+        setEditingTask(undefined)
+      }
     }
   }
 
@@ -65,6 +70,21 @@ export default function DashboardPage() {
 
   const handleDeleteTask = async (taskId: string) => {
     await deleteTask(taskId)
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen gradient-mesh p-6">
+        <div className="container mx-auto max-w-2xl">
+          <Alert className="border-destructive/50 text-destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}. Please try refreshing the page or contact support if the problem persists.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -92,26 +112,7 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   TaskFlow Pro
                 </h1>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  Next-generation task management
-                  <motion.span
-                    className="flex items-center gap-1"
-                    animate={{ scale: isConnected ? [1, 1.1, 1] : 1 }}
-                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-                  >
-                    {isConnected ? (
-                      <>
-                        <Wifi className="h-3 w-3 text-primary" />
-                        <span className="text-primary text-xs font-medium">Live</span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="h-3 w-3 text-destructive" />
-                        <span className="text-destructive text-xs">Offline</span>
-                      </>
-                    )}
-                  </motion.span>
-                </p>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">Next-generation task management</p>
               </div>
             </motion.div>
 
@@ -262,38 +263,46 @@ export default function DashboardPage() {
                     </Button>
                   </div>
 
-                  <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      visible: {
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0.1,
+                  {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <div key={index} className="h-48 bg-muted/20 rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : (
+                    <motion.div
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        visible: {
+                          opacity: 1,
+                          transition: {
+                            staggerChildren: 0.1,
+                          },
                         },
-                      },
-                    }}
-                  >
-                    {tasks.slice(0, 6).map((task, index) => (
-                      <motion.div
-                        key={task.id}
-                        variants={{
-                          hidden: { opacity: 0, y: 20 },
-                          visible: { opacity: 1, y: 0 },
-                        }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
-                      >
-                        <TaskCard
-                          task={task}
-                          onStatusChange={updateTaskStatus}
-                          onEdit={handleEditTask}
-                          onDelete={handleDeleteTask}
-                        />
-                      </motion.div>
-                    ))}
-                  </motion.div>
+                      }}
+                    >
+                      {(tasks || []).slice(0, 6).map((task, index) => (
+                        <motion.div
+                          key={task.id}
+                          variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0 },
+                          }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <TaskCard
+                            task={task}
+                            onStatusChange={updateTaskStatus}
+                            onEdit={handleEditTask}
+                            onDelete={handleDeleteTask}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
                 </motion.div>
               </TabsContent>
 
@@ -357,7 +366,6 @@ export default function DashboardPage() {
                     <h2 className="text-xl font-semibold">Live Activity Feed</h2>
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                       Real-time collaboration updates
-                      {isConnected && <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />}
                     </div>
                   </div>
 
