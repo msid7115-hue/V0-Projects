@@ -1,27 +1,31 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, Calendar, BarChart3 } from "lucide-react"
+import { CheckCircle2, Calendar, BarChart3, ArrowRight, Loader2 } from "lucide-react"
+import Link from "next/link"
 
-export default function AuthPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+export default function HomePage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
+  useEffect(() => {
+    if (user && !loading) {
+      router.push("/dashboard")
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -40,7 +44,7 @@ export default function AuthPage() {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="hidden lg:block space-y-8"
+          className="space-y-8"
         >
           <div className="space-y-4">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -66,7 +70,7 @@ export default function AuthPage() {
               >
                 <feature.icon className="h-5 w-5 text-primary" />
                 <div>
-                  <h3 className="font-medium">{feature.title}</h3>
+                  <h3 className="font-medium text-foreground">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground">{feature.desc}</p>
                 </div>
               </motion.div>
@@ -74,7 +78,7 @@ export default function AuthPage() {
           </div>
         </motion.div>
 
-        {/* Right Side - Auth Forms */}
+        {/* Right Side - CTA */}
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -83,136 +87,27 @@ export default function AuthPage() {
         >
           <Card className="glass-strong shadow-2xl">
             <CardHeader className="text-center space-y-2">
-              <CardTitle className="text-2xl">Welcome to TaskFlow</CardTitle>
-              <CardDescription>Sign in to your account or create a new one</CardDescription>
+              <CardTitle className="text-2xl text-foreground">Welcome to TaskFlow</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Get started with your premium task management experience
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="login" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login" className="space-y-4">
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" type="email" placeholder="Enter your email" className="pl-10" required />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          className="pl-10 pr-10"
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          Signing in...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          Sign In
-                          <ArrowRight className="h-4 w-4" />
-                        </div>
-                      )}
-                    </Button>
-                  </form>
-                  <div className="text-center">
-                    <Button variant="link" className="text-sm text-muted-foreground">
-                      Forgot your password?
-                    </Button>
+            <CardContent className="space-y-4">
+              <Link href="/auth/login">
+                <Button className="w-full" size="lg">
+                  <div className="flex items-center gap-2">
+                    Sign In
+                    <ArrowRight className="h-4 w-4" />
                   </div>
-                </TabsContent>
+                </Button>
+              </Link>
 
-                <TabsContent value="signup" className="space-y-4">
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="name" type="text" placeholder="Enter your full name" className="pl-10" required />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          placeholder="Enter your email"
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Create a password"
-                          className="pl-10 pr-10"
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          Creating account...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          Create Account
-                          <ArrowRight className="h-4 w-4" />
-                        </div>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+              <div className="text-center text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link href="/auth/signup" className="text-primary hover:underline">
+                  Sign up for free
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
