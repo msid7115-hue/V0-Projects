@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   DndContext,
   type DragEndEvent,
@@ -30,24 +31,28 @@ const columns: Array<{
   title: string
   color: string
   bgColor: string
+  gradient: string
 }> = [
   {
     id: "todo",
     title: "To Do",
-    color: "text-slate-600",
-    bgColor: "bg-slate-100 dark:bg-slate-800/50",
+    color: "text-slate-600 dark:text-slate-400",
+    bgColor: "bg-slate-50/80 dark:bg-slate-800/50",
+    gradient: "from-slate-100/50 to-slate-50/30 dark:from-slate-800/50 dark:to-slate-900/30",
   },
   {
     id: "in-progress",
     title: "In Progress",
-    color: "text-blue-600",
-    bgColor: "bg-blue-100 dark:bg-blue-800/50",
+    color: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50/80 dark:bg-blue-800/50",
+    gradient: "from-blue-100/50 to-blue-50/30 dark:from-blue-800/50 dark:to-blue-900/30",
   },
   {
     id: "done",
     title: "Done",
-    color: "text-green-600",
-    bgColor: "bg-green-100 dark:bg-green-800/50",
+    color: "text-primary dark:text-primary",
+    bgColor: "bg-primary/10 dark:bg-primary/20",
+    gradient: "from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/20",
   },
 ]
 
@@ -151,28 +156,57 @@ export function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-          {columns.map((column) => {
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+        >
+          {columns.map((column, index) => {
             const columnTasks = getTasksByStatus(column.id)
             return (
-              <KanbanColumn
+              <motion.div
                 key={column.id}
-                column={column}
-                tasks={columnTasks}
-                onTaskEdit={onTaskEdit}
-                onTaskDelete={onTaskDelete}
-                onCreateTask={onCreateTask}
-              />
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
+                <KanbanColumn
+                  column={column}
+                  tasks={columnTasks}
+                  onTaskEdit={onTaskEdit}
+                  onTaskDelete={onTaskDelete}
+                  onCreateTask={onCreateTask}
+                />
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
 
         <DragOverlay>
-          {activeTask ? (
-            <div className="rotate-3 opacity-90">
-              <KanbanTaskCard task={activeTask} isDragging />
-            </div>
-          ) : null}
+          <AnimatePresence>
+            {activeTask && (
+              <motion.div
+                className="rotate-3 opacity-90"
+                initial={{ scale: 1.05, rotate: 3 }}
+                animate={{ scale: 1.1, rotate: 5 }}
+                exit={{ scale: 0.95, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <KanbanTaskCard task={activeTask} isDragging />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DragOverlay>
       </DndContext>
     </div>
