@@ -47,19 +47,19 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-white/20 shadow-2xl">
+        <Card className="backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border-white/30 shadow-2xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-              Welcome Back
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
+            <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</CardTitle>
+            <CardDescription className="text-gray-700 dark:text-gray-300">
               Sign in to your account to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-900 dark:text-gray-100 font-medium">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -67,34 +67,40 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/50 dark:bg-gray-800/50 border-white/20"
+                  className="bg-white/70 dark:bg-gray-800/70 border-gray-300/50 dark:border-gray-600/50 text-gray-900 dark:text-gray-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-900 dark:text-gray-100 font-medium">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/50 dark:bg-gray-800/50 border-white/20"
+                  className="bg-white/70 dark:bg-gray-800/70 border-gray-300/50 dark:border-gray-600/50 text-gray-900 dark:text-gray-100"
                 />
               </div>
               {error && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-red-500">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-red-600 dark:text-red-400"
+                >
                   {error}
                 </motion.p>
               )}
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600"
+                className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-medium"
                 disabled={isLoading}
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
-            <div className="mt-6 text-center text-sm">
+            <div className="mt-6 text-center text-sm text-gray-700 dark:text-gray-300">
               Don't have an account?{" "}
               <Link href="/auth/signup" className="text-emerald-600 hover:text-emerald-500 font-medium">
                 Sign up
